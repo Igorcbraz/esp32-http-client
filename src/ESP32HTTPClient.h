@@ -8,6 +8,8 @@
 #include "BufferedStreamReader.h"
 #include "GraphQLRequest.h"
 #include "GraphQLTypes.h"
+#include "JsonRpcRequest.h"
+#include "JsonRpcTypes.h"
 #include "RestRequest.h"
 #include "RestTypes.h"
 #include "SoapRequest.h"
@@ -17,6 +19,7 @@ class ESP32HTTPClient {
   friend class RestRequest;
   friend class SoapRequest;
   friend class GraphQLRequest;
+  friend class JsonRpcRequest;
 
  public:
   ESP32HTTPClient(const char* baseUrl, int port = 0);
@@ -33,6 +36,9 @@ class ESP32HTTPClient {
   GraphQLRequest graphql(const char* path = "/graphql");
   GraphQLRequest graphqlGet(const char* path = "/graphql");
   GraphQLRequest graphqlPost(const char* path = "/graphql");
+
+  JsonRpcRequest jsonRpc(const char* path = "");
+  JsonRpcRequest jsonrpc(const char* path = "");
 
   void setBaseUrl(const char* baseUrl, int port = 0);
   void setUrl(const char* baseUrl, int port = 0);
