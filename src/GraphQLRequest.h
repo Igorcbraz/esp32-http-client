@@ -64,7 +64,6 @@ class GraphQLJsonBinder {
 
 class GraphQLRequest {
   friend class ESP32HTTPClient;
-  friend class GraphQLBatchRequest;
 
  public:
   GraphQLRequest(ESP32HTTPClient* client, const char* path = "/graphql", HttpMethod method = HTTP_POST_METHOD);
@@ -199,7 +198,6 @@ class GraphQLRequest {
   const char* _path;
   HttpMethod _method;
   bool _executed;
-  bool _isBatchMember;
   uint16_t _timeout;
   int _maxRetry;
 

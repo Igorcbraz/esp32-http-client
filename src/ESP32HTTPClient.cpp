@@ -279,7 +279,3 @@ GraphQLRequest ESP32HTTPClient::graphqlPost(const char* path) {
   return GraphQLRequest(this, path, HTTP_POST_METHOD);
 }
 
-GraphQLBatchRequest ESP32HTTPClient::graphqlBatch(const char* path) {
-  return GraphQLBatchRequest(this, path);
-}
-
