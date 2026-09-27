@@ -6,7 +6,7 @@
 [![Arduino Library](https://img.shields.io/github/v/release/PedroFnseca/esp32-http-client?color=00979D&label=Arduino&logo=arduino&logoColor=white)](https://github.com/PedroFnseca/esp32-http-client)
 [![PlatformIO Registry](https://img.shields.io/github/v/release/PedroFnseca/esp32-http-client?color=f58220&label=PlatformIO&logo=platformio&logoColor=white)](https://github.com/PedroFnseca/esp32-http-client)
 [![Language](https://img.shields.io/github/languages/top/PedroFnseca/esp32-http-client)](https://github.com/PedroFnseca/esp32-http-client)
-[![Coverage](https://img.shields.io/badge/Coverage-99.02%25-brightgreen)](https://github.com/PedroFnseca/esp32-http-client)
+[![Coverage](https://img.shields.io/badge/Coverage-99.09%25-brightgreen)](https://github.com/PedroFnseca/esp32-http-client)
 [![Hits](https://hits.sh/github.com/PedroFnseca/esp32-http-client.svg?view=today-total)](https://hits.sh/github.com/PedroFnseca/esp32-http-client/)
 [![License](https://img.shields.io/github/license/PedroFnseca/esp32-http-client)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/PedroFnseca/esp32-http-client?style=social)](https://github.com/PedroFnseca/esp32-http-client/stargazers)
@@ -56,8 +56,11 @@ client.get("/sensor").getBody("temperature", &myFloatVariable);
 // SOAP: Automatic envelopes, streaming XML extraction, zero DOM allocations.
 client.soap("/ws").soapAction("GetPrice").body("<m:GetPrice/>").getBody("Price", &myPrice);
 
-// GraphQL: Fluent queries, mutations, variables, batching, and partial data preservation.
+// GraphQL: Fluent queries, mutations, variables, and partial data preservation.
 client.graphql("/graphql").query("query { user { name } }").getData("user.name", &myName);
+
+// JSON-RPC 2.0: Positional/named parameters, notifications, and streaming.
+client.jsonRpc("/rpc").method("add").param(15).param(27).getResult(&mySum);
 ```
 
 ---
@@ -90,7 +93,8 @@ The following data is the result of a benchmark running 100 consecutive HTTP GET
 - **Fluent chaining** — build requests naturally: `.get().query().getBody()`, `.soap().soapAction().body().getBody()`, or `.graphql().query().getData()`.
 - **Direct injection** — JSON, XML, and GraphQL values are written straight into standard C types (`int`, `float`, `bool`, `char*`) or C++ `struct`s.
 - **Zero buffering** — the response stream is parsed in place; the full payload is never stored in memory.
-- **Native GraphQL support** — queries, mutations, variables (primitives and structs), operation selection, batching (`GraphQLBatchRequest`), error locations/paths/extensions, partial data preservation, and incremental streaming (`multipart/mixed`, `@defer`).
+- **Native GraphQL support** — queries, mutations, variables (primitives and structs), operation selection, error locations/paths/extensions, partial data preservation, and incremental streaming (`multipart/mixed`, `@defer`).
+- **Native JSON-RPC 2.0 support** — positional and named parameters, configurable request IDs, notifications, struct serialization/binding, and standard error handling.
 - **Native SOAP 1.1 & 1.2 support** — automatic envelopes, SOAPAction/Content-Type headers, streaming XML response parsing, and SOAP Fault handling.
 - **Struct <-> JSON mapping** — direct bidirectional struct serialization/deserialization without dynamic document allocations.
 - **Full REST support** — `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` are all first-class citizens.
@@ -198,6 +202,35 @@ void setup() {
           .getData("user.name", &userName);
 
     Serial.printf("User ID: %d, Name: %s\n", userId, userName.c_str());
+}
+
+void loop() {}
+```
+
+### JSON-RPC 2.0 API
+
+```cpp
+#include <WiFi.h>
+#include "ESP32HTTPClient.h"
+
+ESP32HTTPClient client("https://api.example.com");
+
+void setup() {
+    Serial.begin(115200);
+    WiFi.begin("SSID", "PASS");
+    while (WiFi.status() != WL_CONNECTED) delay(100);
+
+    int sum = 0;
+
+    // Calls JSON-RPC 2.0 method with positional params and binds result
+    client.jsonRpc("/rpc")
+          .method("add")
+          .param(15)
+          .param(27)
+          .id(1)
+          .getResult(&sum);
+
+    Serial.printf("Result: %d\n", sum);
 }
 
 void loop() {}
@@ -387,6 +420,62 @@ client.soap("/ws")
       });
 ```
 
+### JSON-RPC 2.0 Requests
+
+Consume JSON-RPC 2.0 services over HTTP/HTTPS with automatic envelope serialization, positional or named parameters, struct mapping, and notifications:
+
+```cpp
+// 1. Positional parameters (array: [15, 27])
+int sum = 0;
+client.jsonRpc("/rpc")
+      .method("add")
+      .param(15)
+      .param(27)
+      .id(1)
+      .getResult(&sum);
+
+// 2. Named parameters (object: {"minuend": 42, "subtrahend": 23})
+int subResult = 0;
+client.jsonRpc("/rpc")
+      .method("subtract")
+      .param("minuend", 42)
+      .param("subtrahend", 23)
+      .id("req-sub")
+      .getResult(&subResult)
+      .onJsonRpcError([](const JsonRpcError& err) {
+          Serial.printf("JSON-RPC Error %d: %s\n", err.code, err.message.c_str());
+      });
+
+// 3. Mapped structs in params and result
+struct SensorReading {
+    char device[32] = {0};
+    float temp = 0.0f;
+    REST_JSON_MAP(REST_FIELD(device), REST_FIELD(temp))
+};
+
+SensorReading input = {"DHT22", 23.5f};
+SensorReading output;
+client.jsonRpc("/rpc")
+      .method("processReading")
+      .setParams(input)
+      .getResult(&output);
+
+// 4. Nested result fields and raw extraction
+char city[32] = {0};
+String rawJson;
+client.jsonRpc("/rpc")
+      .method("getUserProfile")
+      .param("id", 101)
+      .getResult("address.city", city, sizeof(city))
+      .getRawResult(&rawJson);
+
+// 5. Notifications (no "id" property, no response parsed)
+client.jsonRpc("/rpc")
+      .method("telemetryPing")
+      .asNotification()
+      .param("device", "esp32-node-1");
+```
+
 ---
 
 ## Examples
@@ -395,6 +484,8 @@ Runnable sketches are available in the `examples/` directory:
 
 | Sketch | Description |
 | :--- | :--- |
+| [JsonRpcBasic](examples/JsonRpcBasic/JsonRpcBasic.ino) | JSON-RPC 2.0 requests with positional/named parameters, notifications, and struct mapping. |
+| [JsonRpcErrorHandling](examples/JsonRpcErrorHandling/JsonRpcErrorHandling.ino) | Handling standard JSON-RPC 2.0 error responses, inspection, and error callbacks. |
 | [SoapBasic](examples/SoapBasic/SoapBasic.ino) | Consuming SOAP 1.1 and SOAP 1.2 web services with automatic envelopes and streaming XML responses. |
 | [SoapFaultHandling](examples/SoapFaultHandling/SoapFaultHandling.ino) | Detecting and handling SOAP 1.1 and SOAP 1.2 faults, inspecting codes, reasons, and callbacks. |
 | [RestCrud](examples/RestCrud/RestCrud.ino) | Full suite of REST CRUD operations (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) in a single sketch. |
@@ -435,6 +526,9 @@ Each method returns a `RestRequest` that can be chained with `.query()`, `.body(
 | `update(path)` | Alias for `put()`. | `client.update("/lights/1")` |
 | `patch(path)` | Sends a PATCH request to `baseUrl + path`. | `client.patch("/config/wifi")` |
 | `del(path)` | Sends a DELETE request to `baseUrl + path`. | `client.del("/logs/old.log")` |
+| `soap(path)` | Initiates a SOAP 1.1 or 1.2 request. Returns `SoapRequest`. | `client.soap("/ws")` |
+| `graphql(path)` | Initiates a GraphQL POST request. Returns `GraphQLRequest`. | `client.graphql("/graphql")` |
+| `jsonRpc(path)` | Initiates a JSON-RPC 2.0 request. Returns `JsonRpcRequest`. | `client.jsonRpc("/rpc")` |
 
 #### Configuration & Authentication methods
 
@@ -523,6 +617,42 @@ client.post("/report")
       .getBody("sensor.temp", &temperature)  // float — nested object
       .getBody("0.address.city", city, sizeof(city)); // char* — array index + nested
 ```
+
+---
+
+### `JsonRpcRequest` — JSON-RPC 2.0 request builder
+
+Returned by `client.jsonRpc(path)`. Provides a fluent builder for JSON-RPC 2.0 single calls and notifications with streaming response binding.
+
+#### Building the request
+
+| Method | Description | Example |
+| :--- | :--- | :--- |
+| `method(name)` | Sets the JSON-RPC 2.0 method name. | `client.jsonRpc("/rpc").method("subtract")` |
+| `param(value)` | Appends a positional parameter (array element). | `req.param(15).param("test")` |
+| `param(key, value)` | Sets a named parameter (object key-value pair). | `req.param("id", 42)` |
+| `addParam(value)` | Explicit alias for appending a positional parameter. | `req.addParam(100)` |
+| `setParam(key, value)` | Explicit alias for setting a named parameter. | `req.setParam("subtrahend", 23)` |
+| `setParams(struct)` | Serializes a mapped struct (`REST_JSON_MAP`) as named parameters. | `req.setParams(sensorData)` |
+| `rawParams(json)` | Sets the raw JSON string for `params` (object or array). | `req.rawParams("{\"a\":1}")` |
+| `id(value)` | Sets request ID (`int`, `long`, `const char*`, or `nullptr` for JSON `null`). | `req.id(1)` or `req.id("req-99")` |
+| `notification()` / `asNotification()` | Marks request as notification (omits `id`, no response expected). | `req.asNotification()` |
+| `header(name, value)` | Adds a custom HTTP header for this request. | `req.header("X-Custom", "val")` |
+| `timeout(ms)` | Overrides timeout for this request in milliseconds. | `req.timeout(5000)` |
+| `retry(maxRetry)` | Overrides max retry attempts for this request. | `req.retry(2)` |
+| `onSuccess(cb)` | Callback invoked on HTTP 2xx response. | `req.onSuccess([](int c){ ... })` |
+| `onError(cb)` | Callback invoked on network or HTTP error. | `req.onError([](int c, const char* m){ ... })` |
+| `onJsonRpcError(cb)` | Callback invoked when the server returns a JSON-RPC error object. | `req.onJsonRpcError([](const JsonRpcError& e){ ... })` |
+
+#### Extracting the response
+
+| Method | Description | Example |
+| :--- | :--- | :--- |
+| `getResult(target)` | Binds primitive (`int*`, `float*`, `bool*`, `String*`, `char*`) or struct to the root `"result"`. | `req.getResult(&myInt)` |
+| `getResult(path, target)` | Binds a nested result field or array element via dot notation. | `req.getResult("user.name", &name)` |
+| `getRawResult(String*)` | Captures the entire `"result"` payload as raw JSON. | `req.getRawResult(&rawJson)` |
+| `getRawResponse(String*)` | Captures the complete HTTP response body as raw JSON. | `req.getRawResponse(&body)` |
+| `getError(JsonRpcError*)` | Populates a `JsonRpcError` struct with code, message, and data. | `req.getError(&err)` |
 
 ---
 

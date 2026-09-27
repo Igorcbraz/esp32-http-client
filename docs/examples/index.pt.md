@@ -24,3 +24,8 @@ Todos os exemplos estão disponíveis no diretório [`examples/`](https://github
 | [Porta Personalizada](port-selection.pt.md) | Conexão com servidores executando em portas não padronizadas. |
 | [Web Services SOAP](soap-requests.pt.md) | Consumo de serviços SOAP 1.1 e SOAP 1.2 com streaming de resposta XML. |
 | [Tratamento de SOAP Faults](soap-faults.pt.md) | Inspeção de códigos, mensagens, detalhes de SOAP Faults e callbacks. |
+| [Consultas GraphQL](graphql-queries.pt.md) | Execução de consultas e mutações GraphQL com extração direta em variáveis. |
+| [Variáveis GraphQL](graphql-variables.pt.md) | Parametrização de operações GraphQL com variáveis tipadas e mapeamento de structs. |
+| [Erros GraphQL](graphql-errors.pt.md) | Inspeção de erros, localizações, caminhos e extensões com preservação de dados. |
+| [Streaming GraphQL](graphql-streaming.pt.md) | Consumo de respostas incrementais com `@defer` e `multipart/mixed`. |
+| [Web Services JSON-RPC](jsonrpc-requests.pt.md) | Requisições JSON-RPC 2.0, parâmetros posicionais e nomeados, notificações e structs. |

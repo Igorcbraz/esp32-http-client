@@ -1,14 +1,14 @@
 ---
 title: Cliente HTTP ESP32 - Biblioteca Cliente HTTP Fluente e Zero Heap
-description: Uma biblioteca cliente HTTP leve, de baixa alocação e alto desempenho para ESP32 (Arduino e PlatformIO). API fluente C++, vínculo direto de respostas para APIs REST, Web Services SOAP 1.1/1.2, serviços GraphQL e comunicação HTTP extensível.
-keywords: Cliente HTTP ESP32, API REST Arduino ESP32, Cliente SOAP ESP32, Cliente GraphQL ESP32, GraphQL Arduino ESP32, SOAP 1.1 1.2 ESP32, Parser JSON ESP32, Parser XML ESP32, PlatformIO ESP32, biblioteca C++ ESP32
+description: Uma biblioteca cliente HTTP leve, de baixa alocação e alto desempenho para ESP32 (Arduino e PlatformIO). API fluente C++, vínculo direto de respostas para APIs REST, Web Services SOAP 1.1/1.2, serviços GraphQL e JSON-RPC 2.0.
+keywords: Cliente HTTP ESP32, API REST Arduino ESP32, Cliente SOAP ESP32, Cliente GraphQL ESP32, Cliente JSON-RPC ESP32, JSON-RPC Arduino ESP32, GraphQL Arduino ESP32, SOAP 1.1 1.2 ESP32, Parser JSON ESP32, Parser XML ESP32, PlatformIO ESP32, biblioteca C++ ESP32
 tags:
   - home
   - overview
 ---
 # Biblioteca ESP32 HTTP Client
 
-> Uma biblioteca cliente HTTP leve, de baixa alocação e alto desempenho para ESP32 que **vincula dados de resposta diretamente às suas variáveis** contando com mecanismos nativos em streaming e zero heap para **APIs REST**, **Web Services SOAP 1.1 / 1.2**, **Serviços GraphQL** e comunicação HTTP extensível.
+> Uma biblioteca cliente HTTP leve, de baixa alocação e alto desempenho para ESP32 que **vincula dados de resposta diretamente às suas variáveis** contando com mecanismos nativos em streaming e zero heap para **APIs REST**, **Web Services SOAP 1.1 / 1.2**, **Serviços GraphQL**, **JSON-RPC 2.0** e comunicação HTTP extensível.
 
 [![Arduino Library](https://img.shields.io/github/v/release/PedroFnseca/esp32-http-client?color=00979D&label=Arduino&logo=arduino&logoColor=white){: width="120" height="20" loading="lazy" decoding="async" }](https://github.com/PedroFnseca/esp32-http-client)
 [![PlatformIO Registry](https://img.shields.io/github/v/release/PedroFnseca/esp32-http-client?color=f58220&label=PlatformIO&logo=platformio&logoColor=white){: width="130" height="20" loading="lazy" decoding="async" }](https://github.com/PedroFnseca/esp32-http-client)
@@ -42,9 +42,24 @@ Construído sobre um núcleo de transporte compartilhado e eficiente (TLS, reuso
           .getBody("0.address.city", city, sizeof(city));
     ```
 
+=== "JSON-RPC 2.0 (Métodos e Notificações)"
+
+    Chame APIs JSON-RPC 2.0 com parâmetros posicionais/nomeados, notificações, structs mapeadas e códigos de erro padrão:
+
+    ```cpp
+    int soma = 0;
+
+    client.jsonRpc("/rpc")
+          .method("add")
+          .param(15)
+          .param(27)
+          .id(1)
+          .getResult(&soma);
+    ```
+
 === "GraphQL (Queries e Mutações)"
 
-    Execute operações GraphQL com variáveis tipadas, seleção de operações, requisições em lote (`GraphQLBatchRequest`), preservação de dados parciais e streaming com `@defer`:
+    Execute operações GraphQL com variáveis tipadas, seleção de operações, preservação de dados parciais e streaming com `@defer`:
 
     ```cpp
     String nome;
@@ -82,10 +97,11 @@ Construído sobre um núcleo de transporte compartilhado e eficiente (TLS, reuso
     client.setTimeout(5000);
     client.setMaxRetry(2);
 
-    // Reutilize o mesmo cliente para endpoints REST, SOAP ou GraphQL
+    // Reutilize o mesmo cliente para endpoints REST, SOAP, GraphQL ou JSON-RPC
     client.get("/api/v1/health");
     client.soap("/ws/service");
     client.graphql("/graphql");
+    client.jsonRpc("/rpc");
     ```
 
 Um cliente unificado. Vinculação direta de memória. Mínimo consumo de RAM.
@@ -206,6 +222,35 @@ Comparativo medido em **100 requisições HTTP GET consecutivas** com cargas JSO
               .getData("country.name", countryName, sizeof(countryName));
 
         Serial.printf("País: %s\n", countryName);
+    }
+
+    void loop() {}
+    ```
+
+=== "API JSON-RPC 2.0"
+
+    ```cpp
+    #include <WiFi.h>
+    #include "ESP32HTTPClient.h"
+
+    ESP32HTTPClient client("https://api.example.com");
+
+    void setup() {
+        Serial.begin(115200);
+        WiFi.begin("SEU_SSID", "SUA_SENHA");
+        while (WiFi.status() != WL_CONNECTED) delay(100);
+
+        int soma = 0;
+
+        // Dispara chamada JSON-RPC 2.0 e vincula resultado diretamente à variável
+        client.jsonRpc("/rpc")
+              .method("add")
+              .param(15)
+              .param(27)
+              .id(1)
+              .getResult(&soma);
+
+        Serial.printf("Resultado: %d\n", soma);
     }
 
     void loop() {}

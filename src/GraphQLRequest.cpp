@@ -194,7 +194,6 @@ GraphQLRequest::GraphQLRequest(ESP32HTTPClient* client, const char* path, HttpMe
       _path(path),
       _method(method),
       _executed(false),
-      _isBatchMember(false),
       _timeout(0),
       _maxRetry(-1),
       _rawDataTarget(nullptr),
@@ -215,7 +214,6 @@ GraphQLRequest::GraphQLRequest(GraphQLRequest&& other)
       _path(other._path),
       _method(other._method),
       _executed(other._executed),
-      _isBatchMember(other._isBatchMember),
       _timeout(other._timeout),
       _maxRetry(other._maxRetry),
       _document(std::move(other._document)),
@@ -245,7 +243,7 @@ GraphQLRequest::GraphQLRequest(GraphQLRequest&& other)
 }
 
 GraphQLRequest::~GraphQLRequest() {
-  if (!_executed && !_isBatchMember) {
+  if (!_executed) {
     execute();
   }
 }
@@ -801,7 +799,7 @@ String GraphQLRequest::buildGetUrl() const {
 
 void GraphQLRequest::execute() {
   _executed = true;
-  if (!_client || _isBatchMember) return;
+  if (!_client) return;
 
   HTTPClient& http = _client->_http;
 

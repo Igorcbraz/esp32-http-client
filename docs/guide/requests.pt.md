@@ -117,6 +117,31 @@ client.del("/sessions")
 
 ---
 
+## Requisições JSON-RPC 2.0
+
+Para APIs JSON-RPC 2.0 sobre HTTP/HTTPS, utilize `client.jsonRpc(path)`. Suporta parâmetros posicionais (vetor), nomeados (objeto), IDs de requisição, notificações e tratamento de erros:
+
+```cpp
+int soma = 0;
+client.jsonRpc("/rpc")
+      .method("add")
+      .param(15)
+      .param(27)
+      .id(1)
+      .getResult(&soma);
+```
+
+Para envio de notificações (onde não há resposta esperada):
+
+```cpp
+client.jsonRpc("/rpc")
+      .method("logEvent")
+      .asNotification()
+      .param("event", "boot");
+```
+
+---
+
 ## Verificando o Código de Status HTTP
 
 Após qualquer requisição, use `getStatusCode()` para inspecionar o resultado:

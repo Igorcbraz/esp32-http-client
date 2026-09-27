@@ -9,7 +9,6 @@
 
 #define private public
 #include "ESP32HTTPClient.h"
-#include "GraphQLBatchRequest.h"
 #include "GraphQLRequest.h"
 #include "GraphQLTypes.h"
 #undef private
@@ -362,42 +361,7 @@ void testGraphQLHttpStatusCodes() {
   expectEq(errMsg.c_str(), "Internal Server Crash", "Error message parsed despite 500 status");
 }
 
-// 10. Batch Requests and Responses
-void testGraphQLBatchRequests() {
-  HttpClientStub::reset();
-  std::string batchResponse = "[\n"
-                              "  {\"data\": {\"user\": {\"name\": \"Eve\"}}},\n"
-                              "  {\"data\": {\"count\": 128}},\n"
-                              "  {\"data\": null, \"errors\": [{\"message\": \"Op 3 failed\"}]}\n"
-                              "]";
-  HttpClientStub::setResponse(200, batchResponse);
-
-  ESP32HTTPClient client("https://api.example.com");
-  auto batch = client.graphqlBatch("/graphql");
-
-  String name;
-  int count = 0;
-  String op3Error;
-
-  auto& op1 = batch.addQuery("query { user { name } }");
-  op1.getData("user.name", &name);
-
-  auto& op2 = batch.addQuery("query { count }");
-  op2.getData("count", &count);
-
-  auto& op3 = batch.addQuery("query { fail }");
-  op3.getErrorMessage(&op3Error);
-
-  batch.execute();
-
-  expectEq(HttpClientStub::lastMethod, "POST", "Batch request uses POST");
-  expectContains(HttpClientStub::lastPayload, "[{\"query\":", "Batch request payload is an array of operations");
-  expectEq(name.c_str(), "Eve", "Batch Op 1 data parsed");
-  expectEqInt(count, 128, "Batch Op 2 count parsed");
-  expectEq(op3Error.c_str(), "Op 3 failed", "Batch Op 3 error parsed");
-}
-
-// 11. Streaming and Incremental Delivery (multipart/mixed)
+// 10. Streaming and Incremental Delivery (multipart/mixed)
 void testGraphQLStreamingMultipart() {
   HttpClientStub::reset();
   HttpClientStub::setResponseHeaders({{"Content-Type", "multipart/mixed; boundary=\"graphql\""}});
@@ -724,113 +688,9 @@ void testGraphQLDetailedErrorsAndObservability() {
   expectContains(capturedSingleErr.extensions.c_str(), "BAD_REQUEST", "Extensions parsed");
 }
 
-// 19. Comprehensive GraphQLBatchRequest API, Retries, Observability & Error Forwarding
-void testGraphQLBatchComprehensive() {
-  HttpClientStub::reset();
-  std::string batchJson = "["
-      "{\"data\":{\"addHero\":{\"id\":10,\"name\":\"Superman\"}}},"
-      "{\"errors\":[{\"message\":\"Villain query failed\"}]}"
-      "]";
-  HttpClientStub::setResponse(200, batchJson);
-
+// 19. Advanced GraphQL Queries, Escaping & Reconnect
+void testGraphQLAdvancedQueriesAndEscaping() {
   ESP32HTTPClient client("https://api.example.com");
-  bool obsBatchCalled = false;
-  client.onObservability([&obsBatchCalled](const ObservabilityMetrics& m) {
-    obsBatchCalled = true;
-  });
-
-  auto batch = client.graphqlBatch("/graphql");
-  batch.header("X-Batch-Id", "123")
-       .header("X-Batch-Id", "Batch-456") // replace
-       .accept("application/json")
-       .timeout(4000)
-       .maxRetry(2)
-       .retry(2);
-
-  int heroId = 0;
-  String heroName;
-  auto& mut = batch.addMutation("mutation { addHero(name: \"Superman\") { id name } }");
-  mut.getData("addHero.id", &heroId)
-     .getData("addHero.name", &heroName);
-
-  expectEqInt(batch.size(), 1, "Batch size is 1 after addMutation");
-  expectEq(batch.operation(0)._document.c_str(), "mutation { addHero(name: \"Superman\") { id name } }", "operation(0) match");
-
-  String op2Error;
-  GraphQLError op2ErrObj;
-  std::vector<GraphQLError> op2ErrList;
-  bool op2SingleCbCalled = false;
-  bool op2MultiCbCalled = false;
-
-  auto& q = batch.addQuery("query { villain }");
-  q.getErrorMessage(&op2Error)
-   .getError(&op2ErrObj)
-   .getErrors(&op2ErrList)
-   .onGraphQLError([&op2SingleCbCalled](const GraphQLError& e) {
-     op2SingleCbCalled = true;
-   })
-   .onGraphQLError([&op2MultiCbCalled](const std::vector<GraphQLError>& elist) {
-     op2MultiCbCalled = true;
-   });
-
-  expectEqInt(batch.size(), 2, "Batch size is 2");
-
-  int batchSuccessCode = 0;
-  int batchRespCode = 0;
-  bool batchMultiErrorCalled = false;
-  String batchRawResponse;
-
-  batch.onSuccess([&batchSuccessCode](int code) { batchSuccessCode = code; })
-       .onResponse([&batchRespCode](int code) { batchRespCode = code; })
-       .onError(static_cast<HttpResponseCallback>(nullptr))
-       .onGraphQLError([&batchMultiErrorCalled](const std::vector<GraphQLError>& errs) {
-         batchMultiErrorCalled = true;
-         expectEq(errs[0].message.c_str(), "Villain query failed", "Batch aggregate error match");
-       })
-       .getRawResponse(&batchRawResponse);
-
-  // Move constructor test for batch
-  GraphQLBatchRequest movedBatch(std::move(batch));
-  movedBatch.execute();
-
-  expectTrue(obsBatchCalled, "Observability fired for batch");
-  expectEqInt(batchSuccessCode, 200, "Batch onSuccess fired");
-  expectEqInt(batchRespCode, 200, "Batch onResponse fired");
-  expectTrue(batchMultiErrorCalled, "Batch onGraphQLError fired");
-  expectTrue(op2SingleCbCalled, "Op 2 single error callback fired");
-  expectTrue(op2MultiCbCalled, "Op 2 multi error callback fired");
-  expectEqInt(heroId, 10, "Batch Op 1 heroId parsed");
-  expectEq(heroName.c_str(), "Superman", "Batch Op 1 heroName parsed");
-  expectEq(op2Error.c_str(), "Villain query failed", "Op 2 error message parsed");
-  expectEq(op2ErrObj.message.c_str(), "Villain query failed", "Op 2 error object parsed");
-  expectEqInt(op2ErrList.size(), 1, "Op 2 error list parsed");
-  expectTrue(batchRawResponse.length() > 0, "Batch raw response captured");
-
-  // Test batch stream error parsing without rawResponseTarget and with client error callback
-  HttpClientStub::reset();
-  HttpClientStub::setResponse(200, "[{\"errors\":[{\"message\":\"DirectStreamErr\"}]}]");
-  auto streamBatch = client.graphqlBatch("/graphql");
-  auto& sOp = streamBatch.addQuery("query { test }");
-  String sErrMsg;
-  GraphQLError sErrObj;
-  std::vector<GraphQLError> sErrList;
-  bool sSingleFired = false;
-  bool sMultiFired = false;
-  sOp.getErrorMessage(&sErrMsg)
-     .getError(&sErrObj)
-     .getErrors(&sErrList)
-     .onGraphQLError([&sSingleFired](const GraphQLError&) { sSingleFired = true; })
-     .onGraphQLError([&sMultiFired](const std::vector<GraphQLError>&) { sMultiFired = true; });
-
-  int singleCbStatus = 0;
-  streamBatch.onError([&singleCbStatus](int status) { singleCbStatus = status; });
-  streamBatch.execute();
-
-  expectEq(sErrMsg.c_str(), "DirectStreamErr", "Direct stream error message bound");
-  expectEq(sErrObj.message.c_str(), "DirectStreamErr", "Direct stream error obj bound");
-  expectEqInt(sErrList.size(), 1, "Direct stream error list size 1");
-  expectTrue(sSingleFired, "Direct stream single error callback fired");
-  expectTrue(sMultiFired, "Direct stream multi error callback fired");
 
   // Test special escaped characters: \b, \f, \n, \r, \t, \\, and control chars
   HttpClientStub::reset();
@@ -996,67 +856,7 @@ void testGraphQLComprehensiveEdgeCases() {
   }
   expectEq(HttpClientStub::lastUrl, "https://api.example.com/auto_single", "GraphQLRequest destructor auto-executed");
 
-  // 7. GraphQLBatchRequest edge cases
-  // Destructor auto-execution on batch
-  HttpClientStub::reset();
-  HttpClientStub::setResponse(200, "[{\"data\":{\"q\":1}}]");
-  {
-    auto b = client.graphqlBatch("/batch_destructor");
-    b.add().query("{ id }");
-  }
-  expectEq(HttpClientStub::lastUrl, "https://api.example.com/batch_destructor", "GraphQLBatchRequest destructor auto-executed");
-
-  // Custom port, client headers, and retry in batch
-  client.setPort(8080);
-  client.setHeader("X-Batch-Hdr", "BatchVal");
-  HttpClientStub::reset();
-  HttpClientStub::queueResponse(-1, "");
-  HttpClientStub::queueResponse(200, "[{\"data\":{\"q\":1}}]");
-  {
-    auto b = client.graphqlBatch("/batch_port");
-    b.add().query("{ q }");
-    b.retry(1);
-    b.execute();
-  }
-  expectContains(HttpClientStub::lastUrl, ":8080/batch_port", "Batch url contains custom port");
-  client.setPort(0);
-
-  // Batch failure callback and onError(HttpErrorCallback)
-  HttpClientStub::reset();
-  HttpClientStub::setResponse(-1, "");
-  bool batchErrFired = false;
-  {
-    auto b = client.graphqlBatch("/batch_fail");
-    b.add().query("{ q }");
-    b.onError([&](int code, const char* msg) {
-      (void)code;
-      (void)msg;
-      batchErrFired = true;
-    });
-    b.execute();
-  }
-  expectTrue(batchErrFired, "Batch error callback fired on HTTP failure");
-
-  // Batch with escaped character in query
-  HttpClientStub::reset();
-  HttpClientStub::setResponse(200, "[{\"data\":{\"q\":1}}]");
-  {
-    auto b = client.graphqlBatch("/batch_esc");
-    b.add().query("query { field(esc: \"hello\\\"world\") }");
-    b.execute();
-  }
-  expectContains(HttpClientStub::lastPayload, "\\\\\\\"world", "Escaped string in batch query");
-
-  // Batch query with escaped backslash
-  HttpClientStub::reset();
-  HttpClientStub::setResponse(200, "[{\"data\":{\"q\":1}}]");
-  {
-    auto b = client.graphqlBatch("/batch_slash");
-    b.add().query("query { field(esc: \"test\\\\esc\") }");
-    b.execute();
-  }
-
-  // BaseUrl with subpath and custom port (GET, POST, Batch)
+  // BaseUrl with subpath and custom port (GET, POST)
   ESP32HTTPClient clientWithSubpath("https://api.example.com/api/v1", 8080);
   HttpClientStub::reset();
   HttpClientStub::setResponse(200, "{\"data\":{\"ok\":true}}");
@@ -1067,15 +867,6 @@ void testGraphQLComprehensiveEdgeCases() {
   HttpClientStub::setResponse(200, "{\"data\":{\"ok\":true}}");
   clientWithSubpath.graphqlPost("/post").execute();
   expectContains(HttpClientStub::lastUrl, "api.example.com:8080/api/v1/post", "POST custom port with baseUrl subpath");
-
-  HttpClientStub::reset();
-  HttpClientStub::setResponse(200, "[{\"data\":{\"ok\":true}}]");
-  {
-    auto b = clientWithSubpath.graphqlBatch("/batch");
-    b.add().query("{ q }");
-    b.execute();
-  }
-  expectContains(HttpClientStub::lastUrl, "api.example.com:8080/api/v1/batch", "Batch custom port with baseUrl subpath");
 
   // Raw data without raw response with bindings
   HttpClientStub::reset();
@@ -1137,7 +928,6 @@ int main() {
   runSuite("GraphQLErrorHandling", testGraphQLErrorHandling);
   runSuite("GraphQLPartialDataPreservation", testGraphQLPartialDataPreservation);
   runSuite("GraphQLHttpStatusCodes", testGraphQLHttpStatusCodes);
-  runSuite("GraphQLBatchRequests", testGraphQLBatchRequests);
   runSuite("GraphQLStreamingMultipart", testGraphQLStreamingMultipart);
   runSuite("GraphQLAuthAndHeaders", testGraphQLAuthAndHeaders);
   runSuite("GraphQLMoveConstructor", testGraphQLMoveConstructor);
@@ -1146,7 +936,7 @@ int main() {
   runSuite("GraphQLScalarVariablesAndRaw", testGraphQLScalarVariablesAndRaw);
   runSuite("GraphQLFluentMethodsAndHeaders", testGraphQLFluentMethodsAndHeaders);
   runSuite("GraphQLDetailedErrorsAndObservability", testGraphQLDetailedErrorsAndObservability);
-  runSuite("GraphQLBatchComprehensive", testGraphQLBatchComprehensive);
+  runSuite("GraphQLAdvancedQueriesAndEscaping", testGraphQLAdvancedQueriesAndEscaping);
   runSuite("GraphQLComprehensiveEdgeCases", testGraphQLComprehensiveEdgeCases);
 
   std::cout << "\n=== GraphQL Test Summary ===\n";

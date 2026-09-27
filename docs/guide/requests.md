@@ -117,6 +117,31 @@ client.del("/sessions")
 
 ---
 
+## JSON-RPC 2.0 Requests
+
+For JSON-RPC 2.0 APIs over HTTP/HTTPS, use `client.jsonRpc(path)`. Supports positional parameters (array), named parameters (object), request IDs, notifications, and error handling:
+
+```cpp
+int sum = 0;
+client.jsonRpc("/rpc")
+      .method("add")
+      .param(15)
+      .param(27)
+      .id(1)
+      .getResult(&sum);
+```
+
+For sending notifications (no response expected):
+
+```cpp
+client.jsonRpc("/rpc")
+      .method("logEvent")
+      .asNotification()
+      .param("event", "boot");
+```
+
+---
+
 ## Checking the HTTP Status Code
 
 After any request, use `getStatusCode()` to inspect the result:

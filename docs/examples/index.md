@@ -24,3 +24,8 @@ All examples are available in the [`examples/`](https://github.com/PedroFnseca/e
 | [Custom Port](port-selection.md) | Connecting to a server running on a non-standard port. |
 | [SOAP Web Services](soap-requests.md) | Consuming SOAP 1.1 and SOAP 1.2 web services with streaming XML responses. |
 | [SOAP Faults](soap-faults.md) | Inspecting SOAP Fault codes, reasons, details, and callbacks. |
+| [GraphQL Queries](graphql-queries.md) | Running GraphQL queries and mutations with direct response field binding. |
+| [GraphQL Variables](graphql-variables.md) | Parameterizing GraphQL operations with typed variables and struct mappings. |
+| [GraphQL Errors](graphql-errors.md) | Inspecting GraphQL errors, locations, paths, and extensions while preserving data. |
+| [GraphQL Streaming](graphql-streaming.md) | Consuming deferred incremental streams (`multipart/mixed`, `@defer`). |
+| [JSON-RPC Web Services](jsonrpc-requests.md) | JSON-RPC 2.0 requests, positional/named parameters, notifications, and struct mapping. |

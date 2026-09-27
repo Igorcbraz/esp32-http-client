@@ -9,6 +9,7 @@ BUILD_DIR="$SCRIPT_DIR/build"
 REST_EXE="$BUILD_DIR/unit-tests-rest"
 SOAP_EXE="$BUILD_DIR/unit-tests-soap"
 GRAPHQL_EXE="$BUILD_DIR/unit-tests-graphql"
+JSONRPC_EXE="$BUILD_DIR/unit-tests-jsonrpc"
 
 # Default coverage: ON in GitHub Actions, OFF locally for ultra-fast runs
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
@@ -27,11 +28,11 @@ for arg in "$@"; do
     --no-coverage)
       SHOW_COVERAGE=0
       ;;
-    rest|soap|graphql|all)
+    rest|soap|graphql|jsonrpc|all)
       TARGET_SUITE="$arg"
       ;;
     -h|--help)
-      echo "Usage: $0 [rest|soap|graphql|all] [--coverage|--no-coverage]"
+      echo "Usage: $0 [rest|soap|graphql|jsonrpc|all] [--coverage|--no-coverage]"
       exit 0
       ;;
   esac
@@ -94,6 +95,8 @@ if command -v make >/dev/null 2>&1 && [ -f "$SCRIPT_DIR/Makefile" ]; then
     MAKE_TARGET="$SOAP_EXE"
   elif [ "$TARGET_SUITE" = "graphql" ]; then
     MAKE_TARGET="$GRAPHQL_EXE"
+  elif [ "$TARGET_SUITE" = "jsonrpc" ]; then
+    MAKE_TARGET="$JSONRPC_EXE"
   fi
 
   make -C "$SCRIPT_DIR" -j"$NPROC" \
@@ -105,13 +108,14 @@ else
   REST_REQUEST_OBJ="$BUILD_DIR/RestRequest.o"
   SOAP_REQUEST_OBJ="$BUILD_DIR/SoapRequest.o"
   GRAPHQL_REQUEST_OBJ="$BUILD_DIR/GraphQLRequest.o"
-  GRAPHQL_BATCH_REQUEST_OBJ="$BUILD_DIR/GraphQLBatchRequest.o"
+  JSONRPC_REQUEST_OBJ="$BUILD_DIR/JsonRpcRequest.o"
   HTTP_CLIENT_OBJ="$BUILD_DIR/ESP32HTTPClient.o"
   BUFFERED_READER_OBJ="$BUILD_DIR/BufferedStreamReader.o"
 
   REST_TEST_OBJ="$BUILD_DIR/test_rest_request.o"
   SOAP_TEST_OBJ="$BUILD_DIR/test_soap_request.o"
   GRAPHQL_TEST_OBJ="$BUILD_DIR/test_graphql_request.o"
+  JSONRPC_TEST_OBJ="$BUILD_DIR/test_jsonrpc_request.o"
 
   compile_obj() {
     src="$1"
@@ -122,15 +126,16 @@ else
   compile_obj "$REPO_ROOT/src/RestRequest.cpp" "$REST_REQUEST_OBJ" &
   compile_obj "$REPO_ROOT/src/SoapRequest.cpp" "$SOAP_REQUEST_OBJ" &
   compile_obj "$REPO_ROOT/src/GraphQLRequest.cpp" "$GRAPHQL_REQUEST_OBJ" &
-  compile_obj "$REPO_ROOT/src/GraphQLBatchRequest.cpp" "$GRAPHQL_BATCH_REQUEST_OBJ" &
+  compile_obj "$REPO_ROOT/src/JsonRpcRequest.cpp" "$JSONRPC_REQUEST_OBJ" &
   compile_obj "$REPO_ROOT/src/ESP32HTTPClient.cpp" "$HTTP_CLIENT_OBJ" &
   compile_obj "$REPO_ROOT/src/BufferedStreamReader.cpp" "$BUFFERED_READER_OBJ" &
   compile_obj "$SCRIPT_DIR/test_rest_request.cpp" "$REST_TEST_OBJ" &
   compile_obj "$SCRIPT_DIR/test_soap_request.cpp" "$SOAP_TEST_OBJ" &
   compile_obj "$SCRIPT_DIR/test_graphql_request.cpp" "$GRAPHQL_TEST_OBJ" &
+  compile_obj "$SCRIPT_DIR/test_jsonrpc_request.cpp" "$JSONRPC_TEST_OBJ" &
   wait
 
-  LIB_OBJS="$REST_REQUEST_OBJ $SOAP_REQUEST_OBJ $GRAPHQL_REQUEST_OBJ $GRAPHQL_BATCH_REQUEST_OBJ $HTTP_CLIENT_OBJ $BUFFERED_READER_OBJ"
+  LIB_OBJS="$REST_REQUEST_OBJ $SOAP_REQUEST_OBJ $GRAPHQL_REQUEST_OBJ $JSONRPC_REQUEST_OBJ $HTTP_CLIENT_OBJ $BUFFERED_READER_OBJ"
 
   if [ "$TARGET_SUITE" = "all" ] || [ "$TARGET_SUITE" = "rest" ]; then
     "$COMPILER" -std=c++17 $COVERAGE_FLAGS "$REST_TEST_OBJ" $LIB_OBJS -o "$REST_EXE" &
@@ -140,6 +145,9 @@ else
   fi
   if [ "$TARGET_SUITE" = "all" ] || [ "$TARGET_SUITE" = "graphql" ]; then
     "$COMPILER" -std=c++17 $COVERAGE_FLAGS "$GRAPHQL_TEST_OBJ" $LIB_OBJS -o "$GRAPHQL_EXE" &
+  fi
+  if [ "$TARGET_SUITE" = "all" ] || [ "$TARGET_SUITE" = "jsonrpc" ]; then
+    "$COMPILER" -std=c++17 $COVERAGE_FLAGS "$JSONRPC_TEST_OBJ" $LIB_OBJS -o "$JSONRPC_EXE" &
   fi
   wait
 fi
@@ -174,6 +182,10 @@ if [ "$TARGET_SUITE" = "all" ] || [ "$TARGET_SUITE" = "graphql" ]; then
   run_test_suite "$GRAPHQL_EXE" "GraphQL Tests"
 fi
 
+if [ "$TARGET_SUITE" = "all" ] || [ "$TARGET_SUITE" = "jsonrpc" ]; then
+  run_test_suite "$JSONRPC_EXE" "JSON-RPC Tests"
+fi
+
 # Coverage collection and reporting (used by CI to update coverage badge)
 if [ "$SHOW_COVERAGE" = "1" ] && command -v gcov >/dev/null 2>&1; then
   set +e
@@ -183,7 +195,7 @@ if [ "$SHOW_COVERAGE" = "1" ] && command -v gcov >/dev/null 2>&1; then
       "$BUILD_DIR/RestRequest.o" \
       "$BUILD_DIR/SoapRequest.o" \
       "$BUILD_DIR/GraphQLRequest.o" \
-      "$BUILD_DIR/GraphQLBatchRequest.o" \
+      "$BUILD_DIR/JsonRpcRequest.o" \
       "$BUILD_DIR/ESP32HTTPClient.o" \
       "$BUILD_DIR/BufferedStreamReader.o" 2>/dev/null
   )"
