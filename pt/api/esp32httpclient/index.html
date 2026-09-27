@@ -1347,14 +1347,14 @@ function __md_analytics(){
   
   
     <li class="md-nav__item">
-      <a href="../../examples/graphql-batch/" class="md-nav__link">
+      <a href="../../examples/graphql-streaming/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Requisições em Lote GraphQL
+    Streaming e @defer GraphQL
   
 
     
@@ -1375,14 +1375,14 @@ function __md_analytics(){
   
   
     <li class="md-nav__item">
-      <a href="../../examples/graphql-streaming/" class="md-nav__link">
+      <a href="../../examples/jsonrpc-requests/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Streaming e @defer GraphQL
+    Web Services JSON-RPC
   
 
     
@@ -1694,10 +1694,10 @@ function __md_analytics(){
 </li>
         
           <li class="md-nav__item">
-  <a href="#graphqlbatchpath" class="md-nav__link">
+  <a href="#jsonrpcpath-jsonrpcpath" class="md-nav__link">
     <span class="md-ellipsis">
       
-        graphqlBatch(path)
+        jsonRpc(path) / jsonrpc(path)
       
     </span>
   </a>
@@ -2230,14 +2230,14 @@ function __md_analytics(){
   
   
     <li class="md-nav__item">
-      <a href="../graphqlbatchrequest/" class="md-nav__link">
+      <a href="../jsonrpcrequest/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    GraphQLBatchRequest
+    JsonRpcRequest
   
 
     
@@ -2624,10 +2624,10 @@ function __md_analytics(){
 </li>
         
           <li class="md-nav__item">
-  <a href="#graphqlbatchpath" class="md-nav__link">
+  <a href="#jsonrpcpath-jsonrpcpath" class="md-nav__link">
     <span class="md-ellipsis">
       
-        graphqlBatch(path)
+        jsonRpc(path) / jsonrpc(path)
       
     </span>
   </a>
@@ -3237,15 +3237,19 @@ tags:
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">      </span><span class="p">.</span><span class="n">getData</span><span class="p">(</span><span class="s">"statusSistema"</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
 </code></pre></div></p>
 <hr />
-<h3 id="graphqlbatchpath"><code>graphqlBatch(path)</code><a class="headerlink" href="#graphqlbatchpath" title="Permanent link">&para;</a></h3>
-<p>Inicia um lote de múltiplas operações GraphQL para <code>baseUrl + path</code> enviadas em uma única requisição HTTP POST, retornando um builder <a href="../graphqlbatchrequest/"><code>GraphQLBatchRequest</code></a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">GraphQLBatchRequest</span><span class="w"> </span><span class="n">graphqlBatch</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/graphql"</span><span class="p">);</span>
+<h3 id="jsonrpcpath-jsonrpcpath"><code>jsonRpc(path)</code> / <code>jsonrpc(path)</code><a class="headerlink" href="#jsonrpcpath-jsonrpcpath" title="Permanent link">&para;</a></h3>
+<p>Inicia uma requisição JSON-RPC 2.0 direcionada a <code>baseUrl + path</code>, retornando um construtor <a href="../jsonrpcrequest/"><code>JsonRpcRequest</code></a>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">JsonRpcRequest</span><span class="w"> </span><span class="n">jsonRpc</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">);</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">JsonRpcRequest</span><span class="w"> </span><span class="n">jsonrpc</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">);</span>
 </code></pre></div>
 <p><strong>Exemplo:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">batch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">graphqlBatch</span><span class="p">(</span><span class="s">"/graphql"</span><span class="p">);</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="n">batch</span><span class="p">.</span><span class="n">addQuery</span><span class="p">(</span><span class="s">"query { user { name } }"</span><span class="p">).</span><span class="n">getData</span><span class="p">(</span><span class="s">"user.name"</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">nome</span><span class="p">);</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">batch</span><span class="p">.</span><span class="n">addQuery</span><span class="p">(</span><span class="s">"query { config { tema } }"</span><span class="p">).</span><span class="n">getData</span><span class="p">(</span><span class="s">"config.tema"</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">tema</span><span class="p">);</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="n">batch</span><span class="p">.</span><span class="n">execute</span><span class="p">();</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">soma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="n">client</span><span class="p">.</span><span class="n">jsonRpc</span><span class="p">(</span><span class="s">"/rpc"</span><span class="p">)</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">      </span><span class="p">.</span><span class="n">method</span><span class="p">(</span><span class="s">"add"</span><span class="p">)</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">      </span><span class="p">.</span><span class="n">param</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">      </span><span class="p">.</span><span class="n">param</span><span class="p">(</span><span class="mi">27</span><span class="p">)</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">      </span><span class="p">.</span><span class="n">id</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">      </span><span class="p">.</span><span class="n">getResult</span><span class="p">(</span><span class="o">&amp;</span><span class="n">soma</span><span class="p">);</span>
 </code></pre></div></p>
 <hr />
 <h2 id="metodos-de-configuracao">Métodos de Configuração<a class="headerlink" href="#metodos-de-configuracao" title="Permanent link">&para;</a></h2>
@@ -3797,7 +3801,7 @@ tags:
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="22 de setembro de 2026 23:44:30 UTC">22 de setembro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="27 de setembro de 2026 21:05:56 UTC">27 de setembro de 2026</span>
   </span>
 
     
