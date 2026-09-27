@@ -62,6 +62,32 @@ ESP32HTTPClient client("https://jsonplaceholder.typicode.com");
           .getBody("NumberToWordsResult", result, sizeof(result));
     ```
 
+=== "GraphQL API"
+
+    ```cpp
+    String countryName;
+
+    // GraphQL Query
+    client.graphql("/graphql")
+          .query("query GetCountry($code: ID!) { country(code: $code) { name } }")
+          .variable("code", "BR")
+          .getData("country.name", &countryName);
+    ```
+
+=== "JSON-RPC 2.0 API"
+
+    ```cpp
+    int sum = 0;
+
+    // JSON-RPC 2.0 Call with positional parameters
+    client.jsonRpc("/rpc")
+          .method("add")
+          .param(15)
+          .param(27)
+          .id(1)
+          .getResult(&sum);
+    ```
+
 ## Full Sketch
 
 === "REST API"
@@ -144,6 +170,49 @@ ESP32HTTPClient client("https://jsonplaceholder.typicode.com");
 
         if (client.getStatusCode() == 200) {
             Serial.printf("SOAP Result: %s\n", result);
+        } else {
+            Serial.printf("HTTP Error: %d\n", client.getStatusCode());
+        }
+
+        delay(10000);
+    }
+    ```
+
+=== "JSON-RPC 2.0 API"
+
+    ```cpp
+    #include <Arduino.h>
+    #include <WiFi.h>
+    #include "ESP32HTTPClient.h"
+
+    const char* ssid     = "YOUR_SSID";
+    const char* password = "YOUR_PASSWORD";
+
+    ESP32HTTPClient client("https://api.example.com");
+
+    void setup() {
+        Serial.begin(115200);
+
+        WiFi.begin(ssid, password);
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
+        }
+        Serial.println("\nConnected!");
+    }
+
+    void loop() {
+        int sum = 0;
+
+        client.jsonRpc("/rpc")
+              .method("add")
+              .param(15)
+              .param(27)
+              .id(1)
+              .getResult(&sum);
+
+        if (client.getStatusCode() == 200) {
+            Serial.printf("Sum Result: %d\n", sum);
         } else {
             Serial.printf("HTTP Error: %d\n", client.getStatusCode());
         }

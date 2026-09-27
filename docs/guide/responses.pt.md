@@ -130,6 +130,48 @@ As buscas por cabeçalhos **não diferenciam maiúsculas de minúsculas**, porta
 
 ---
 
+## Lendo Respostas JSON-RPC 2.0 com `getResult()`
+
+Ao trabalhar com requisições JSON-RPC 2.0, os dados do payload são extraídos usando `.getResult()` em vez de `.getBody()`. Suporta primitivos na raiz, campos aninhados, structs mapeadas e extração bruta de JSON diretamente:
+
+```cpp
+// 1. Vinculação primitiva na raiz "result"
+int soma = 0;
+client.jsonRpc("/rpc").method("add").param(10).param(20).getResult(&soma);
+
+// 2. Campo aninhado dentro do objeto "result"
+char cidade[32] = {0};
+client.jsonRpc("/rpc").method("getUser").param("id", 1).getResult("address.city", cidade, sizeof(cidade));
+
+// 3. Vinculação com struct mapeada
+User perfil;
+client.jsonRpc("/rpc").method("getUser").param("id", 1).getResult(&perfil);
+
+// 4. String bruta do resultado JSON
+String rawResult;
+client.jsonRpc("/rpc").method("getMetrics").getRawResult(&rawResult);
+```
+
+### Inspecionando Erros JSON-RPC
+
+Se o servidor responder com um objeto de erro JSON-RPC 2.0 (`{"error": {"code": -32601, "message": "Method not found"}}`), os códigos de status HTTP ainda podem ser `200 OK`. Você pode detectar e inspecionar erros JSON-RPC com `.getError()` ou `.onJsonRpcError()`:
+
+```cpp
+JsonRpcError erro;
+client.jsonRpc("/rpc")
+      .method("metodoInexistente")
+      .getError(&erro)
+      .onJsonRpcError([](const JsonRpcError& err) {
+          Serial.printf("Código de erro: %d, Mensagem: %s\n", err.code, err.message.c_str());
+      });
+
+if (erro.code != 0) {
+    Serial.printf("Erro JSON-RPC detectado: %s\n", erro.message.c_str());
+}
+```
+
+---
+
 ## Garantias de Segurança
 
 !!! note "Chaves e cabeçalhos ausentes são seguros"

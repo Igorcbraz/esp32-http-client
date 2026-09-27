@@ -111,14 +111,14 @@ plugins:
             GraphQL Queries: Consultas GraphQL
             GraphQL Variables: Variáveis GraphQL
             GraphQL Error Handling: Tratamento de Erros GraphQL
-            GraphQL Batching: Requisições em Lote GraphQL
             GraphQL Streaming: Streaming e @defer GraphQL
+            JSON-RPC Web Services: Web Services JSON-RPC
             API Reference: Referência da API
             ESP32HTTPClient: ESP32HTTPClient
             RestRequest: RestRequest
             SoapRequest: SoapRequest
             GraphQLRequest: GraphQLRequest
-            GraphQLBatchRequest: GraphQLBatchRequest
+            JsonRpcRequest: JsonRpcRequest
             FAQ: Perguntas Frequentes
             Performance: Desempenho
             Privacy Policy: Política de Privacidade
@@ -173,15 +173,15 @@ nav:
     - GraphQL Queries: examples/graphql-queries.md
     - GraphQL Variables: examples/graphql-variables.md
     - GraphQL Error Handling: examples/graphql-errors.md
-    - GraphQL Batching: examples/graphql-batch.md
     - GraphQL Streaming: examples/graphql-streaming.md
+    - JSON-RPC Web Services: examples/jsonrpc-requests.md
   - API Reference:
     - api/index.md
     - ESP32HTTPClient: api/esp32httpclient.md
     - RestRequest: api/restrequest.md
     - SoapRequest: api/soaprequest.md
     - GraphQLRequest: api/graphqlrequest.md
-    - GraphQLBatchRequest: api/graphqlbatchrequest.md
+    - JsonRpcRequest: api/jsonrpcrequest.md
   - Practical Examples: practical-examples.md
   - FAQ: faq.md
   - Performance: performance.md

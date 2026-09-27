@@ -207,22 +207,27 @@ client.graphqlGet("/graphql")
       .getData("statusSistema", &status);
 ```
 
+
 ---
 
-### `graphqlBatch(path)`
+### `jsonRpc(path)` / `jsonrpc(path)`
 
-Inicia um lote de múltiplas operações GraphQL para `baseUrl + path` enviadas em uma única requisição HTTP POST, retornando um builder [`GraphQLBatchRequest`](graphqlbatchrequest.pt.md).
+Inicia uma requisição JSON-RPC 2.0 direcionada a `baseUrl + path`, retornando um construtor [`JsonRpcRequest`](jsonrpcrequest.pt.md).
 
 ```cpp
-GraphQLBatchRequest graphqlBatch(const char* path = "/graphql");
+JsonRpcRequest jsonRpc(const char* path = "");
+JsonRpcRequest jsonrpc(const char* path = "");
 ```
 
 **Exemplo:**
 ```cpp
-auto batch = client.graphqlBatch("/graphql");
-batch.addQuery("query { user { name } }").getData("user.name", &nome);
-batch.addQuery("query { config { tema } }").getData("config.tema", &tema);
-batch.execute();
+int soma = 0;
+client.jsonRpc("/rpc")
+      .method("add")
+      .param(15)
+      .param(27)
+      .id(1)
+      .getResult(&soma);
 ```
 
 ---

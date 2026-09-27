@@ -62,6 +62,32 @@ ESP32HTTPClient client("https://jsonplaceholder.typicode.com");
           .getBody("NumberToWordsResult", result, sizeof(result));
     ```
 
+=== "API GraphQL"
+
+    ```cpp
+    String nomePais;
+
+    // Consulta GraphQL
+    client.graphql("/graphql")
+          .query("query GetCountry($code: ID!) { country(code: $code) { name } }")
+          .variable("code", "BR")
+          .getData("country.name", &nomePais);
+    ```
+
+=== "API JSON-RPC 2.0"
+
+    ```cpp
+    int soma = 0;
+
+    // Chamada JSON-RPC 2.0 com parâmetros posicionais
+    client.jsonRpc("/rpc")
+          .method("add")
+          .param(15)
+          .param(27)
+          .id(1)
+          .getResult(&soma);
+    ```
+
 ## Código Completo (Sketch)
 
 === "REST API"
@@ -144,6 +170,49 @@ ESP32HTTPClient client("https://jsonplaceholder.typicode.com");
 
         if (client.getStatusCode() == 200) {
             Serial.printf("Resultado SOAP: %s\n", result);
+        } else {
+            Serial.printf("Erro HTTP: %d\n", client.getStatusCode());
+        }
+
+        delay(10000);
+    }
+    ```
+
+=== "API JSON-RPC 2.0"
+
+    ```cpp
+    #include <Arduino.h>
+    #include <WiFi.h>
+    #include "ESP32HTTPClient.h"
+
+    const char* ssid     = "SEU_SSID";
+    const char* password = "SUA_SENHA";
+
+    ESP32HTTPClient client("https://api.example.com");
+
+    void setup() {
+        Serial.begin(115200);
+
+        WiFi.begin(ssid, password);
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
+        }
+        Serial.println("\nConectado!");
+    }
+
+    void loop() {
+        int soma = 0;
+
+        client.jsonRpc("/rpc")
+              .method("add")
+              .param(15)
+              .param(27)
+              .id(1)
+              .getResult(&soma);
+
+        if (client.getStatusCode() == 200) {
+            Serial.printf("Resultado da Soma: %d\n", soma);
         } else {
             Serial.printf("Erro HTTP: %d\n", client.getStatusCode());
         }
