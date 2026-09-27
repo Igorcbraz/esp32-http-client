@@ -13,7 +13,7 @@ endif
 LIB_SRCS = ../src/RestRequest.cpp \
            ../src/SoapRequest.cpp \
            ../src/GraphQLRequest.cpp \
-           ../src/GraphQLBatchRequest.cpp \
+           ../src/JsonRpcRequest.cpp \
            ../src/ESP32HTTPClient.cpp \
            ../src/BufferedStreamReader.cpp
 
@@ -22,17 +22,19 @@ LIB_OBJS = $(patsubst ../src/%.cpp, $(BUILD_DIR)/%.o, $(LIB_SRCS))
 REST_TEST_OBJ = $(BUILD_DIR)/test_rest_request.o
 SOAP_TEST_OBJ = $(BUILD_DIR)/test_soap_request.o
 GRAPHQL_TEST_OBJ = $(BUILD_DIR)/test_graphql_request.o
+JSONRPC_TEST_OBJ = $(BUILD_DIR)/test_jsonrpc_request.o
 
 REST_EXE = $(BUILD_DIR)/unit-tests-rest
 SOAP_EXE = $(BUILD_DIR)/unit-tests-soap
 GRAPHQL_EXE = $(BUILD_DIR)/unit-tests-graphql
+JSONRPC_EXE = $(BUILD_DIR)/unit-tests-jsonrpc
 
-ALL_OBJS = $(LIB_OBJS) $(REST_TEST_OBJ) $(SOAP_TEST_OBJ) $(GRAPHQL_TEST_OBJ)
+ALL_OBJS = $(LIB_OBJS) $(REST_TEST_OBJ) $(SOAP_TEST_OBJ) $(GRAPHQL_TEST_OBJ) $(JSONRPC_TEST_OBJ)
 DEPS = $(ALL_OBJS:.o=.d)
 
-.PHONY: all test test-rest test-soap test-graphql clean
+.PHONY: all test test-rest test-soap test-graphql test-jsonrpc clean
 
-all: $(REST_EXE) $(SOAP_EXE) $(GRAPHQL_EXE)
+all: $(REST_EXE) $(SOAP_EXE) $(GRAPHQL_EXE) $(JSONRPC_EXE)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -52,6 +54,9 @@ $(SOAP_EXE): $(SOAP_TEST_OBJ) $(LIB_OBJS)
 $(GRAPHQL_EXE): $(GRAPHQL_TEST_OBJ) $(LIB_OBJS)
 	$(CXX) $(CXXFLAGS) $(COVERAGE_FLAGS) $^ -o $@
 
+$(JSONRPC_EXE): $(JSONRPC_TEST_OBJ) $(LIB_OBJS)
+	$(CXX) $(CXXFLAGS) $(COVERAGE_FLAGS) $^ -o $@
+
 test-rest: $(REST_EXE)
 	@echo ">>> Running REST Tests <<<"
 	@$(REST_EXE)
@@ -64,6 +69,10 @@ test-graphql: $(GRAPHQL_EXE)
 	@echo ">>> Running GraphQL Tests <<<"
 	@$(GRAPHQL_EXE)
 
+test-jsonrpc: $(JSONRPC_EXE)
+	@echo ">>> Running JSON-RPC Tests <<<"
+	@$(JSONRPC_EXE)
+
 test: all
 	@echo ">>> Running REST Tests <<<"
 	@$(REST_EXE)
@@ -73,6 +82,9 @@ test: all
 	@echo ""
 	@echo ">>> Running GraphQL Tests <<<"
 	@$(GRAPHQL_EXE)
+	@echo ""
+	@echo ">>> Running JSON-RPC Tests <<<"
+	@$(JSONRPC_EXE)
 
 clean:
 	rm -rf $(BUILD_DIR)
