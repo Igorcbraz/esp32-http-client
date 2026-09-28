@@ -101,12 +101,20 @@ jobs:
             echo "**Full Changelog:** https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...v${{ steps.version.outputs.version }}" >> RELEASE_NOTES.md
           fi
 
+      - name: Package Release ZIP
+        if: steps.tag.outputs.exists == 'false'
+        run: |
+          ZIP_NAME="ESP32-HTTP-Client-v${{ steps.version.outputs.version }}.zip"
+          zip -r "$ZIP_NAME" src examples library.properties library.json README.md LICENSE SECURITY.md CONTRIBUTING.md
+
       - name: Create GitHub Release
         if: steps.tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           body_path: RELEASE_NOTES.md
+          files: |
+            ESP32-HTTP-Client-v${{ steps.version.outputs.version }}.zip
 
       - name: Publish to PlatformIO Registry
         if: steps.tag.outputs.exists == 'false'
