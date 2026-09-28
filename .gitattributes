@@ -1,2 +1,19 @@
 # Enforce LF line endings for shell scripts on all platforms
 *.sh text eol=lf
+
+# Exclude documentation, tests, overrides, tooling, and CI configs from release archives
+.github/ export-ignore
+.vscode/ export-ignore
+.clang-format export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+overrides/ export-ignore
+docs/ export-ignore
+tests/ export-ignore
+tools/ export-ignore
+bench/ export-ignore
+site/ export-ignore
+mkdocs.yml export-ignore
+requirements.txt export-ignore
+bump.py export-ignore
+platformio.ini export-ignore
