@@ -12,6 +12,8 @@
 [![Stars](https://img.shields.io/github/stars/PedroFnseca/esp32-http-client?style=social)](https://github.com/PedroFnseca/esp32-http-client/stargazers)
 [![Downloads](https://img.shields.io/endpoint?url=https://esp32-http-stats.esp32httpclient.com/downloads)](https://github.com/PedroFnseca/esp32-http-client)
 
+<a href="https://trendshift.io/repositories/151845?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-151845" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/151845/daily?language=C%2B%2B" alt="PedroFnseca%2Fesp32-http-client | Trendshift" width="250" height="55"/></a>
+
 ---
 
 ## Table of Contents
