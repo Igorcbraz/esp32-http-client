@@ -28,6 +28,12 @@
   </p>
 
   <img src="https://github.com/user-attachments/assets/87d6d955-d13b-4815-8a49-b97e84818e22" alt="ESP32 HTTP Client overview" width="100%" />
+
+  <p>
+    <a href="https://trendshift.io/repositories/151845?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-151845">
+      <img src="https://trendshift.io/api/badge/trendshift/repositories/151845/daily?language=C%2B%2B" alt="ESP32 HTTP Client on Trendshift" width="250" height="55" />
+    </a>
+  </p>
 </div>
 
 ## Contents
